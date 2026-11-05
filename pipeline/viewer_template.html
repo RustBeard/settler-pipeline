@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Osadnik 3D – podgląd animacji</title>
+<style>
+  :root { --bg:#f4f4f2; --fg:#1d1d1b; --muted:#66665f; --line:#d9d9d4; --accent:#3d6fa8; --card:#fff; --stage:#3c3c40; }
+  @media (prefers-color-scheme: dark) { :root { --bg:#1b1b1a; --fg:#ececea; --muted:#a3a39e; --line:#34342f; --card:#242422; --accent:#7fa8d8; } }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.5 system-ui, sans-serif; background:var(--bg); color:var(--fg); }
+  main { max-width:1180px; margin:0 auto; padding:24px 16px 48px; }
+  h1 { font-size:22px; margin:0 0 4px; }
+  h2 { font-size:15px; margin:0 0 10px; }
+  p.lead { margin:0 0 20px; color:var(--muted); }
+  .grid { display:grid; grid-template-columns: 1fr 1fr; gap:16px; }
+  @media (max-width: 860px) { .grid { grid-template-columns:1fr; } }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:10px; padding:14px; }
+  .full { grid-column: 1 / -1; }
+  canvas.stage { width:100%; aspect-ratio: 1 / 1; border-radius:8px; background:var(--stage); display:block; image-rendering:pixelated; }
+  #view { touch-action:none; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; align-items:center; }
+  button { font:inherit; padding:6px 12px; border-radius:6px; border:1px solid var(--line); background:var(--card); color:var(--fg); cursor:pointer; min-height:36px; }
+  button[aria-pressed="true"] { background:var(--accent); color:#fff; border-color:var(--accent); }
+  button:focus-visible, input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+  label { display:flex; gap:8px; align-items:center; color:var(--muted); font-size:14px; }
+  .pixrow { display:flex; gap:12px; align-items:flex-start; }
+  .compass { display:grid; grid-template-columns: repeat(3, 44px); gap:4px; flex:none; }
+  .compass button { padding:0; width:44px; height:44px; font-size:13px; }
+  .strip { display:grid; grid-template-columns: repeat(8, 1fr); gap:8px; }
+  .strip figure { margin:0; text-align:center; }
+  .strip canvas { width:100%; aspect-ratio:1/1; image-rendering:pixelated; background:var(--stage); border-radius:6px; display:block; }
+  .strip figcaption { font-size:12px; color:var(--muted); }
+  img.pix { width:100%; image-rendering:pixelated; border-radius:8px; display:block; background:var(--stage); }
+  .note { color:var(--muted); font-size:13px; margin:8px 0 0; }
+  .legend { display:flex; flex-wrap:wrap; gap:10px; font-size:13px; color:var(--muted); margin-top:8px; }
+  .legend span::before { content:""; display:inline-block; width:12px; height:12px; border-radius:2px; margin-right:5px; vertical-align:-2px; background:var(--c); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Osadnik 3D – podgląd animacji</h1>
+  <p class="lead">Model 3D i pixel art grają w tym samym tempie. Wybierz kierunek, zatrzymaj i przewijaj klatki.</p>
+  <div class="grid">
+    <section class="card" aria-labelledby="h3d">
+      <h2 id="h3d">Model 3D</h2>
+      <canvas id="view" class="stage" aria-label="Podgląd 3D postaci"></canvas>
+      <div class="bar">
+        <button id="cam" aria-pressed="true">Kamera gry (30°)</button>
+        <button id="bones" aria-pressed="false">Pokaż kości</button>
+      </div>
+      <p class="note">W kamerze gry model obraca się razem z wybranym kierunkiem. Wyłącz ją, żeby obracać model myszą.</p>
+    </section>
+    <section class="card" aria-labelledby="hpx">
+      <h2 id="hpx">Pixel art</h2>
+      <div class="pixrow">
+        <canvas id="big" class="stage" width="24" height="24" aria-label="Animacja pixel art w wybranym kierunku"></canvas>
+        <div>
+          <div class="compass" role="group" aria-label="Kierunek">
+            <button data-d="NW">NW</button><button data-d="N">N</button><button data-d="NE">NE</button>
+            <button data-d="W">W</button><span></span><button data-d="E">E</button>
+            <button data-d="SW">SW</button><button data-d="S">S</button><button data-d="SE">SE</button>
+          </div>
+        </div>
+      </div>
+      <div class="bar">
+        <button id="mode" aria-pressed="false">Wzorzec kolorowy</button>
+        <button id="play" aria-pressed="true">Pauza</button>
+        <button id="prev" aria-label="Poprzednia klatka">◀ Klatka</button>
+        <button id="next" aria-label="Następna klatka">Klatka ▶</button>
+        <span id="fr" class="note" aria-live="polite"></span>
+      </div>
+      <div class="bar">
+        <label>Tempo <input id="speed" type="range" min="0.25" max="2" step="0.25" value="1"> <span id="spv">1×</span></label>
+      </div>
+      <div class="legend" aria-label="Kolory wzorca">
+        <span style="--c:#eeeeee">głowa</span><span style="--c:#7a4a28">włosy</span><span style="--c:#707070">tułów</span>
+        <span style="--c:#e02020">lewa dłoń</span><span style="--c:#f5d000">lewa stopa</span>
+        <span style="--c:#2060e0">prawa dłoń</span><span style="--c:#20b040">prawa stopa</span>
+      </div>
+    </section>
+    <section class="card full" aria-labelledby="hall">
+      <h2 id="hall">Wszystkie kierunki</h2>
+      <div class="strip" id="stripG"></div>
+      <div class="strip" id="stripC" style="margin-top:8px"></div>
+    </section>
+    <section class="card" aria-labelledby="hsh">
+      <h2 id="hsh">Sprite sheet</h2>
+      <img class="pix" alt="Sprite sheet animacji, wiersze to kierunki" src="data:image/png;base64,__GRAY__">
+      <img class="pix" style="margin-top:8px" alt="Sprite sheet wzorca kolorowego" src="data:image/png;base64,__COLOR__">
+      <p class="note">Wiersze: S, SW, W, NW, N, NE, E, SE. Kolumny: kolejne klatki.</p>
+    </section>
+    <section class="card" aria-labelledby="hcmp" __CMP_HIDDEN__>
+      <h2 id="hcmp">Twój wzór (góra) vs render modelu (dół)</h2>
+      <img class="pix" alt="Porównanie oryginalnych sprite'ów z renderem modelu" src="data:image/png;base64,__CMP__">
+    </section>
+  </div>
+</main>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+const CFG = __CFG__;
+const DIR_ORDER = CFG.dirs;
+let dir = "S", colorMode = false, playing = true, speed = 1, t = 0, cycle = 1;
+
+// ---------- sprite sheets ----------
+function loadImg(src) { const i = new Image(); i.src = src; return i; }
+const sheets = { gray: loadImg("data:image/png;base64,__GRAY__"), color: loadImg("data:image/png;base64,__COLOR__") };
+const frameIdx = () => Math.floor((((t % cycle) + cycle) % cycle) / cycle * CFG.nf) % CFG.nf;
+function drawFrame(ctx, sheet, d, f) {
+  ctx.clearRect(0, 0, CFG.cw, CFG.ch);
+  ctx.drawImage(sheet, f * CFG.cw, DIR_ORDER.indexOf(d) * CFG.ch, CFG.cw, CFG.ch, 0, 0, CFG.cw, CFG.ch);
+}
+const big = document.getElementById("big").getContext("2d");
+function makeStrip(id, key) {
+  const el = document.getElementById(id), list = [];
+  for (const d of DIR_ORDER) {
+    const fig = document.createElement("figure");
+    const c = document.createElement("canvas"); c.width = CFG.cw; c.height = CFG.ch;
+    c.setAttribute("aria-label", `Kierunek ${d}`);
+    const cap = document.createElement("figcaption"); cap.textContent = d;
+    fig.append(c, cap); el.append(fig); list.push([c.getContext("2d"), d, key]);
+  }
+  return list;
+}
+const strips = [...makeStrip("stripG", "gray"), ...makeStrip("stripC", "color")];
+
+// ---------- 3D ----------
+const canvas = document.getElementById("view");
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+const scene = new THREE.Scene(); scene.background = new THREE.Color(0x3c3c40);
+scene.add(new THREE.HemisphereLight(0xffffff, 0x666677, 1.7));
+const sun = new THREE.DirectionalLight(0xffffff, 1.5); sun.position.set(3, 10, 6); scene.add(sun);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(9, 48), new THREE.MeshLambertMaterial({ color: 0x55555c }));
+ground.rotation.x = -Math.PI / 2; scene.add(ground);
+const persp = new THREE.PerspectiveCamera(35, 1, 0.1, 500); persp.position.set(14, 14, 26);
+const ortho = new THREE.OrthographicCamera(-11, 11, 11, -11, 0.1, 500);
+const el = THREE.MathUtils.degToRad(30);
+ortho.position.set(0, 8 + 60 * Math.sin(el), 60 * Math.cos(el)); ortho.lookAt(0, 8, 0);
+let camera = ortho;
+const controls = new OrbitControls(persp, canvas); controls.target.set(0, 7, 0); controls.update(); controls.enabled = false;
+let mixer, action, helper, model;
+const bytes = Uint8Array.from(atob("__GLB__"), c => c.charCodeAt(0));
+new GLTFLoader().parse(bytes.buffer, "", g => {
+  model = g.scene; scene.add(model);
+  model.traverse(o => { if (o.isMesh && o.material.name === "skin") o.material.color.set(0xeeeeee); });
+  mixer = new THREE.AnimationMixer(model);
+  const clip = g.animations.find(a => a.name === CFG.anim) || g.animations[0];
+  action = mixer.clipAction(clip); action.play(); cycle = clip.duration;
+  helper = new THREE.SkeletonHelper(model); helper.visible = false; scene.add(helper);
+  setDir(dir);
+});
+function size() {
+  const w = canvas.clientWidth, h = canvas.clientHeight;
+  renderer.setSize(w, h, false); persp.aspect = w / h; persp.updateProjectionMatrix();
+}
+new ResizeObserver(size).observe(canvas); size();
+
+// ---------- loop ----------
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = clock.getDelta();
+  if (playing) t += dt * speed;
+  if (action) { action.time = ((t % cycle) + cycle) % cycle; mixer.update(0); }
+  renderer.render(scene, camera);
+  const f = frameIdx();
+  if (sheets.gray.complete) {
+    drawFrame(big, colorMode ? sheets.color : sheets.gray, dir, f);
+    for (const [ctx, d, key] of strips) drawFrame(ctx, sheets[key], d, f);
+  }
+  document.getElementById("fr").textContent = `Klatka ${f + 1} / ${CFG.nf}`;
+});
+
+// ---------- controls ----------
+const press = (b, on) => b.setAttribute("aria-pressed", on);
+function setDir(d) {
+  dir = d;
+  document.querySelectorAll(".compass button").forEach(b => press(b, b.dataset.d === d));
+  if (model) model.rotation.y = THREE.MathUtils.degToRad(-45 * DIR_ORDER.indexOf(d));
+}
+document.querySelectorAll(".compass button").forEach(b => b.onclick = () => setDir(b.dataset.d));
+const playBtn = document.getElementById("play");
+playBtn.onclick = () => { playing = !playing; press(playBtn, playing); playBtn.textContent = playing ? "Pauza" : "Odtwarzaj"; };
+const step = s => { playing = false; press(playBtn, false); playBtn.textContent = "Odtwarzaj";
+  t = (Math.floor(((t % cycle) + cycle) % cycle / cycle * CFG.nf) + s + 0.5) / CFG.nf * cycle; };
+document.getElementById("prev").onclick = () => step(-1);
+document.getElementById("next").onclick = () => step(1);
+const modeBtn = document.getElementById("mode");
+modeBtn.onclick = () => { colorMode = !colorMode; press(modeBtn, colorMode); };
+const sp = document.getElementById("speed");
+sp.oninput = () => { speed = +sp.value; document.getElementById("spv").textContent = `${speed}×`; };
+const camBtn = document.getElementById("cam");
+camBtn.onclick = () => { camera = camera === persp ? ortho : persp; controls.enabled = camera === persp; press(camBtn, camera === ortho); };
+const bonesBtn = document.getElementById("bones");
+bonesBtn.onclick = () => { if (helper) { helper.visible = !helper.visible; press(bonesBtn, helper.visible); } };
+setDir("S");
+</script>
+</body>
+</html>
