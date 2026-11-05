@@ -1,103 +1,103 @@
 # settler-pipeline
 
-Prosty model 3D osadnika → rig → animacja → wzorzec do rysowania pixel artu w Aseprite.
+A simple 3D settler model → rig → animation → reference for drawing pixel art in Aseprite.
 
-Model jest **wzorcem**, nie gotowym spritem. Pokazuje, gdzie jest każda część ciała w każdej klatce i w każdym z 8 kierunków. Gotowy pixel art rysujesz na nim ręcznie.
+The model is a **reference**, not a finished sprite. It shows where each body part is in every frame and in each of the 8 directions. You draw the final pixel art over it by hand.
 
-## Szybki start
+## Quick start
 
 ```
-pip install -r requirements.txt      # Blender jako moduł Pythona (bpy), ok. 1 min
+pip install -r requirements.txt      # Blender as a Python module (bpy), about 1 min
 python3 pipeline/run.py characters/base/params.json
 ```
 
-Opcjonalnie z porównaniem do Twoich sprite'ów (8 sprite'ów w jednym rzędzie: S, SW, W, NW, N, NE, E, SE):
+Optionally, compare with your own sprites (8 sprites in one row: S, SW, W, NW, N, NE, E, SE):
 
 ```
 python3 pipeline/run.py characters/base/params.json --original sprites.png --scale 10
 ```
 
-Pełny przebieg trwa ok. 10 s. Wyniki trafiają do `out/`.
+A full run takes about 10 s. Output goes to `out/`.
 
-## Co dostajesz w `out/`
+## What you get in `out/`
 
-| Plik | Do czego |
+| File | What it's for |
 |---|---|
-| `settler_walk_ref.aseprite` | Wzorzec do rysowania: 8 kierunków × 6 klatek, tag na każdy kierunek, warstwa referencyjna + pusta warstwa „rysuj tutaj” |
-| `viewer.html` | Podgląd: animacja 3D obok animacji pixel artu, 8 kierunków, przewijanie klatek |
-| `settler.glb` | Model z rigiem i animacją (np. do Godota) |
-| `settler.blend` | To samo dla Blendera |
-| `settler_walk_sheet.png` | Szary pixel art (wiersze = kierunki, kolumny = klatki) |
-| `settler_walk_ref_sheet.png` | Wzorzec kolorowy jako sprite sheet |
-| `compare.png` | Twój wzór vs render (tylko z `--original`) |
+| `settler_walk_ref.aseprite` | Drawing reference: 8 directions × 6 frames, one tag per direction, a reference layer + an empty "rysuj tutaj" ("draw here") layer |
+| `viewer.html` | Preview: 3D animation next to the pixel-art animation, 8 directions, frame stepping |
+| `settler.glb` | Model with rig and animation (e.g. for Godot) |
+| `settler.blend` | The same for Blender |
+| `settler_walk_sheet.png` | Gray pixel art (rows = directions, columns = frames) |
+| `settler_walk_ref_sheet.png` | Color reference as a sprite sheet |
+| `compare.png` | Your sprite vs. the render (only with `--original`) |
 
-## Kolory wzorca
+## Reference colors
 
-Lewa strona postaci jest ciepła, prawa zimna.
+The character's left side is warm, the right side is cool.
 
-| Część | Kolor |
+| Part | Color |
 |---|---|
-| Głowa | jasnoszary |
-| Włosy | brązowy |
-| Tułów | ciemnoszary |
-| Lewa dłoń | czerwony |
-| Lewa stopa | żółty |
-| Prawa dłoń | niebieski |
-| Prawa stopa | zielony |
-| Oczy | czarny |
+| Head | light gray |
+| Hair | brown |
+| Torso | dark gray |
+| Left hand | red |
+| Left foot | yellow |
+| Right hand | blue |
+| Right foot | green |
+| Eyes | black |
 
 ## Model
 
-Jednostka = 1 piksel sprite'a. Postać patrzy w −Y, ziemia to z = 0.
+1 unit = 1 sprite pixel. The character faces −Y; the ground is z = 0.
 
-- **Głowa** – superelipsoida (coś między kulą a sześcianem), krótkie włosy.
-- **Tułów** – walec.
-- **Dłonie i stopy** – kule, bez ramion i nóg.
-- **Rig** – 7 kości: `root`, `body`, `head`, `hand.L`, `hand.R`, `foot.L`, `foot.R`. Każda część jest sztywna (waga 1).
+- **Head** – superellipsoid (between a sphere and a cube), buzz-cut hair.
+- **Torso** – cylinder.
+- **Hands and feet** – spheres, no arms or legs.
+- **Rig** – 7 bones: `root`, `body`, `head`, `hand.L`, `hand.R`, `foot.L`, `foot.R`. Each part is rigid (weight 1).
 
-## Parametry (`characters/base/params.json`)
+## Parameters (`characters/base/params.json`)
 
-### Kształt
+### Shape
 
-| Parametr | Co robi |
+| Parameter | What it does |
 |---|---|
-| `head_c`, `head_r` | Środek i promienie głowy (x, y, z) |
-| `head_roundness_n` | 2 = kula, im więcej, tym bliżej sześcianu (teraz 3,6) |
-| `hairline_front`, `hairline_side`, `hairline_back` | Wysokość linii włosów: nad czołem, nad uszami, na karku (−1…1) |
-| `body_c`, `body_radius`, `body_height` | Tułów |
-| `hand_x`, `hand_y`, `hand_z`, `hand_radius` | Dłonie (lustrzane) |
-| `foot_x`, `foot_y`, `foot_radius` | Stopy (lustrzane) |
-| `eye_dx`, `eye_dz`, `eye_r` | Oczy |
+| `head_c`, `head_r` | Head center and radii (x, y, z) |
+| `head_roundness_n` | 2 = sphere; higher = closer to a cube (currently 3.6) |
+| `hairline_front`, `hairline_side`, `hairline_back` | Hairline height: above the forehead, above the ears, at the nape (−1…1) |
+| `body_c`, `body_radius`, `body_height` | Torso |
+| `hand_x`, `hand_y`, `hand_z`, `hand_radius` | Hands (mirrored) |
+| `foot_x`, `foot_y`, `foot_radius` | Feet (mirrored) |
+| `eye_dx`, `eye_dz`, `eye_r` | Eyes |
 
-### Chód
+### Walk
 
-| Parametr | Co robi |
+| Parameter | What it does |
 |---|---|
-| `walk_frames` | Klatki pętli w 3D (musi dzielić się przez liczbę klatek sprite'a) |
-| `phase_offset` | Przesunięcie, z której fazy kroku startuje pierwsza klatka |
-| `stance` | Jaką część cyklu stopa stoi na ziemi (0,6 = 60%) |
-| `stride_front`, `stride_back` | Jak daleko stopa sięga do przodu i do tyłu |
-| `lift` | Jak wysoko stopa się unosi |
-| `heel_kick` | 0 = stopa jest najwyżej w połowie zamachu; 1 = pięta najpierw idzie w górę z tyłu, a dopiero potem stopa leci do przodu (stopę widać w widoku N) |
-| `hand_swing`, `hand_arc` | Zamach rąk i jak bardzo dłoń z przodu idzie w górę |
-| `hand_cross` | Jak bardzo dłoń z przodu wchodzi do środka ciała (dłoń z tyłu idzie o połowę tego na zewnątrz); daje ruch rąk w poziomie w widokach S i N |
-| `hand_even` | 0 = ręka kopiuje ruch stopy (szybki powrót do tyłu); 1 = równe tempo, pół cyklu do przodu i pół do tyłu |
-| `bob_up` | Jaką część kroku tułów jest w górze; 0,67 = przy 6 klatkach 1 klatka w dole (stopa ląduje) i 2 w górze. Brak parametru = w górze tylko w szczycie zamachu stopy |
+| `walk_frames` | Frames in the 3D loop (must be a multiple of the sprite frame count) |
+| `phase_offset` | Which step phase the first frame starts from |
+| `stance` | Share of the cycle a foot stays on the ground (0.6 = 60%) |
+| `stride_front`, `stride_back` | How far the foot reaches forward and back |
+| `lift` | How high the foot lifts |
+| `heel_kick` | 0 = the foot is highest mid-swing; 1 = the heel lifts behind first, then the foot swings forward (makes the foot visible in the N view) |
+| `hand_swing`, `hand_arc` | Arm swing and how much the front hand rises |
+| `hand_cross` | How far the front hand moves toward the body's midline (the back hand moves half that outward); adds sideways hand motion in the S and N views |
+| `hand_even` | 0 = the hand copies the foot's motion (fast back swing); 1 = even timing, half the cycle forward and half back |
+| `bob_up` | Share of each step the torso is up; 0.67 = with 6 frames, 1 frame down (foot lands) and 2 up. Not set = up only at the peak of the foot swing |
 
-Tułów z głową podskakuje zawsze dokładnie o 1 px, żeby kształt głowy nie „pływał”.
+The torso and head always bob by exactly 1 px, so the head shape doesn't "swim."
 
-### Kamera
+### Camera
 
-| Parametr | Co robi |
+| Parameter | What it does |
 |---|---|
-| `elev_deg` | Kąt kamery nad poziomem (widok top-down) |
-| `target_z`, `cam_dx` | Wyśrodkowanie w klatce 24×24 i wyrównanie do siatki pikseli |
+| `elev_deg` | Camera angle above the horizon (top-down view) |
+| `target_z`, `cam_dx` | Centering in the 24×24 frame and alignment to the pixel grid |
 
-## Jak to działa
+## How it works
 
-1. `build.py` – buduje model, rig i animację w Blenderze, eksportuje `.blend` i `.glb`.
-2. `render.py` – renderuje 8 kierunków. Każdy piksel zapisuje część ciała, głębię i kierunek powierzchni.
-3. `pixelize.py` – zmniejsza render do pikseli sprite'a (głosowanie większościowe), dodaje kontur i cień.
-4. `make_ref.py` – składa kolorowy wzorzec i zapisuje plik `.aseprite`.
-5. `make_viewer.py` – składa stronę z podglądem.
-6. `run.py` – uruchamia wszystko po kolei.
+1. `build.py` – builds the model, rig and animation in Blender; exports `.blend` and `.glb`.
+2. `render.py` – renders 8 directions. Each pixel stores the body part, depth and surface direction.
+3. `pixelize.py` – downscales the render to sprite pixels (majority vote), adds the outline and shading.
+4. `make_ref.py` – builds the color reference and writes the `.aseprite` file.
+5. `make_viewer.py` – builds the preview page.
+6. `run.py` – runs everything in order.
