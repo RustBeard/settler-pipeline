@@ -159,30 +159,55 @@ STANCE = p("stance", 0.6)                       # share of the cycle a foot is p
 F_FRONT, F_BACK = p("stride_front", 1.4), p("stride_back", 2.2)
 LIFT = p("lift", 1.5)
 H_SWING, H_ARC = p("hand_swing", 2.0), p("hand_arc", 1.0)
+H_CROSS = p("hand_cross", 0.0)                   # sideways hand travel toward the body midline
+H_EVEN = p("hand_even", 0.0)                     # 0 = hands copy the feet, 1 = even forward/back timing
+BOB_UP = p("bob_up", None)                       # share of each step the body is up (None = up only at swing peak)
 STEP = 1 / math.cos(math.radians(p("elev_deg", 30)))  # z offset that moves 1 screen pixel
 
+KICK = p("heel_kick", 0.0)                       # 0 = lift peaks mid-swing, 1 = peaks early (foot still behind)
+T_PEAK = 0.5 - 0.3 * KICK                        # swing progress at which the foot is highest
+
 def foot_cycle(u):
-    """u in [0,1): returns (y, z) offset; -y is forward."""
+    """u in [0,1): returns (y, z, swing_height); -y is forward.
+    swing_height is the unshifted 0..1 swing arc, used for the body bob so heel_kick doesn't move it."""
     u %= 1.0
     if u < STANCE:                               # planted: slides from front to back
         t = u / STANCE
-        return -F_FRONT + (F_FRONT + F_BACK) * t, 0.0
+        return -F_FRONT + (F_FRONT + F_BACK) * t, 0.0, 0.0
     t = (u - STANCE) / (1 - STANCE)              # swing: lifts and moves forward
-    e = 0.5 - 0.5 * math.cos(math.pi * t)
-    return F_BACK - (F_FRONT + F_BACK) * e, LIFT * math.sin(math.pi * t)
+    # heel_kick also delays the forward travel, so the lifted foot stays behind the body for a while
+    d = 0.35 * KICK
+    ty = max(0.0, (t - d) / (1 - d))
+    e = 0.5 - 0.5 * math.cos(math.pi * ty)
+    # remap t so the lift peak lands at T_PEAK (heel kicks up behind the body before swinging forward)
+    w = 0.5 * t / T_PEAK if t < T_PEAK else 0.5 + 0.5 * (t - T_PEAK) / (1 - T_PEAK)
+    return F_BACK - (F_FRONT + F_BACK) * e, LIFT * math.sin(math.pi * w), math.sin(math.pi * t)
 
 for f in range(N + 1):  # include frame N = frame 0 for smooth looping in glTF
     u = (f + p("phase_offset", 0)) / N
     mid = (F_BACK - F_FRONT) / 2; half = (F_FRONT + F_BACK) / 2
     up = False
     for side, off in (("L", 0.0), ("R", 0.5)):
-        y, z = foot_cycle(u + off)
+        y, z, sh = foot_cycle(u + off)
         set_loc(f"foot.{side}", (0, y, z), f)
-        up = up or z > 0.7 * LIFT
+        up = up or sh > 0.7
         n = (y - mid) / half                     # +1 = foot far back
+        # hand_even blends from "copy the foot" (fast back swing during the foot's short swing phase)
+        # to an even sine: half the cycle forward, half back; peaks when the same-side foot is furthest back
+        n_even = math.cos(2 * math.pi * ((u + off) % 1.0 - STANCE))
+        n = (1 - H_EVEN) * n + H_EVEN * n_even
         hy = -H_SWING * n                        # hand goes forward when the same-side foot is back
         hz = H_ARC * max(0.0, -hy / H_SWING) + 0.3 * H_ARC * max(0.0, hy / H_SWING)
-        set_loc(f"hand.{side}", (0, hy, hz), f)
+        # cross-body swing: the forward hand moves toward the midline, the back hand slightly outward,
+        # so the arm swing also reads sideways in the S and N views
+        sx = 1 if side == "L" else -1
+        hx = -sx * H_CROSS * (n if n > 0 else 0.5 * n)
+        set_loc(f"hand.{side}", (hx, hy, hz), f)
+    if BOB_UP is not None:
+        # step-based bob: each step (half cycle) starts at a heel strike; the body is down for the
+        # first (1 - BOB_UP) of the step (weight landing) and up for the rest
+        s = (2 * u) % 1.0
+        up = s >= 1 - BOB_UP
     set_loc("body", (0, 0, STEP if up else 0.0), f)
     set_loc("head", (0, 0, 0.0), f)
 

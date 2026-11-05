@@ -40,10 +40,14 @@
  "hairline_back": -0.3,
  "stance": 0.6,
  "stride_front": 1.4,
- "stride_back": 2.2,
+ "stride_back": 3.2,
  "lift": 1.5,
  "hand_swing": 2.0,
  "hand_arc": 1.0,
  "target_z": 8.0,
- "cam_dx": 0.5
+ "cam_dx": 0.5,
+ "heel_kick": 1.0,
+ "hand_cross": 1.0,
+ "hand_even": 1.0,
+ "bob_up": 0.67
 }

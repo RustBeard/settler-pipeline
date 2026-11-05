@@ -78,7 +78,11 @@ Jednostka = 1 piksel sprite'a. Postać patrzy w −Y, ziemia to z = 0.
 | `stance` | Jaką część cyklu stopa stoi na ziemi (0,6 = 60%) |
 | `stride_front`, `stride_back` | Jak daleko stopa sięga do przodu i do tyłu |
 | `lift` | Jak wysoko stopa się unosi |
+| `heel_kick` | 0 = stopa jest najwyżej w połowie zamachu; 1 = pięta najpierw idzie w górę z tyłu, a dopiero potem stopa leci do przodu (stopę widać w widoku N) |
 | `hand_swing`, `hand_arc` | Zamach rąk i jak bardzo dłoń z przodu idzie w górę |
+| `hand_cross` | Jak bardzo dłoń z przodu wchodzi do środka ciała (dłoń z tyłu idzie o połowę tego na zewnątrz); daje ruch rąk w poziomie w widokach S i N |
+| `hand_even` | 0 = ręka kopiuje ruch stopy (szybki powrót do tyłu); 1 = równe tempo, pół cyklu do przodu i pół do tyłu |
+| `bob_up` | Jaką część kroku tułów jest w górze; 0,67 = przy 6 klatkach 1 klatka w dole (stopa ląduje) i 2 w górze. Brak parametru = w górze tylko w szczycie zamachu stopy |
 
 Tułów z głową podskakuje zawsze dokładnie o 1 px, żeby kształt głowy nie „pływał”.
 
